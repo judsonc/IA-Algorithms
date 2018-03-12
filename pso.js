@@ -1,10 +1,14 @@
+/*
+* Particle Swarm Optimization Simplified Algorithm
+*/
+
 let pVector = []; //Particle Vector
 let gbest = Math.random(); //Best position global, random value to begin
 let w = 0.5; //Inertial coeficient, how much the prev velocity influences at the new one
 let p1 = Math.random(), p2 = Math.random(); //Coeficients random
 let c1 = 0.2, c2 = 0.8; //c1 is how much personal experiences matters, c2 is how much global experiences matters
 let nParticle = 5; //Number of particles
-let erro = 0.0000001; //Minimum solutio's error 
+let erro = 0.0000001; //Minimum solution's error 
 let bestPbest; //canditade to a global best position
 let nGeneration = 10000; //Number of generations or repetitions that the algorithm will work
 
