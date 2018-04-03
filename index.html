@@ -1,14 +1,93 @@
 <html>
 
 <head>
+  <title>Simple Map</title>
+  <meta name="viewport" content="initial-scale=1.0">
   <meta charset="utf-8">
-  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-  <script type="text/javascript" src="./pso.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    #map {
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .btn-reload {
+      top: auto;
+      right: 50px;
+      bottom: 24px;
+      left: auto;
+      position: fixed;
+      box-shadow: rgba(0, 0, 0, 0.3) 0px 1px 4px -1px;
+      background-color: rgb(255, 255, 255);
+      border-radius: 50%;
+      padding: 10px;
+    }
+
+    @keyframes rotating {
+      from {
+        transform: rotate(0deg);
+        -o-transform: rotate(0deg);
+        -ms-transform: rotate(0deg);
+        -moz-transform: rotate(0deg);
+        -webkit-transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+        -o-transform: rotate(360deg);
+        -ms-transform: rotate(360deg);
+        -moz-transform: rotate(360deg);
+        -webkit-transform: rotate(360deg);
+      }
+    }
+
+    @-webkit-keyframes rotating {
+      from {
+        transform: rotate(0deg);
+        -webkit-transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+        -webkit-transform: rotate(360deg);
+      }
+    }
+
+    .rotating {
+      -webkit-animation: rotating 2s linear infinite;
+      -moz-animation: rotating 2s linear infinite;
+      -ms-animation: rotating 2s linear infinite;
+      -o-animation: rotating 2s linear infinite;
+      animation: rotating 2s linear infinite;
+    }
+
+    #svg-reload {
+      fill: rgb(102, 102, 102);
+      height: 36px;
+      width: 36px;
+      user-select: none;
+      line-height: 56px;
+      cursor: pointer;
+      transition: all 450ms cubic-bezier(0.23, 1, 0.32, 1) 0ms;
+    }
+  </style>
 </head>
 
-<body style="margin:0">
-  <div id="map" style="width: 100vw; height: 100vh;"></div>
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBcMFCfbdJdD3__pdiZWMU9Ab5PS2N-pYo&callback=initMap"></script>
+<body>
+  <div id="map"></div>
+  <button id="reload" class="btn-reload" title="Reiniciar" disabled>
+    <svg viewBox="0 0 24 24" id="svg-reload" class="rotating">
+      <path d="M12 6v3l4-4-4-4v3c-4.42 0-8 3.58-8 8 0 1.57.46 3.03 1.24 4.26L6.7 14.8c-.45-.83-.7-1.79-.7-2.8 0-3.31 2.69-6 6-6zm6.76 1.74L17.3 9.2c.44.84.7 1.79.7 2.8 0 3.31-2.69 6-6 6v-3l-4 4 4 4v-3c4.42 0 8-3.58 8-8 0-1.57-.46-3.03-1.24-4.26z"
+      />
+      <path d="M0 0h24v24H0z" fill="none" />
+    </svg>
+  </button>
+
+  <script defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBcMFCfbdJdD3__pdiZWMU9Ab5PS2N-pYo"></script>
+  <script src="./pso.js"></script>
 </body>
 
 </html>

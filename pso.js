@@ -4,8 +4,8 @@
 
 // Person
 class Person {
-  constructor({ x, y }, consumption) {
-    this.position = { x, y }
+  constructor({ lat, lng }, consumption) {
+    this.position = { lat, lng }
     this.consumption = consumption
   }
 }
@@ -13,190 +13,172 @@ class Person {
 // Particle
 class Particle {
   constructor(position, velocity) {
-    this.position = position // { x, y }
-    this.velocity = velocity // { x, y }
+    this.position = position // { lat, lng }
+    this.velocity = velocity // { lat, lng }
     this.pbest = position //Initially pbest get the initial position once ir had never moved
     this.fitness //result from the fitness function
   }
 }
 
-// Person Vector
-const people = new Array(4).fill(0).map(
-  () =>
-    new Person(
-      {
-        x: Math.random() * 0.01 - 5.835,
-        y: Math.random() * 0.01 - 35.204,
-      },
-      Math.random() * 10,
-    ),
-)
-
-// Particle Vector
-const pVector = new Array(4).fill(0).map(
-  () =>
-    new Particle(
-      {
-        x: Math.random() * 0.01 - 5.835,
-        y: Math.random() * 0.01 - 35.204,
-      },
-      {
-        x: Math.random() * 0.01 - 5.835,
-        y: Math.random() * 0.01 - 35.204,
-      },
-    ),
-)
-
-// const allPositions = [];
-let gbest = { x: 1e6, y: 1e6 } //Best position global, random value to begin
 const w = 0.6 //Inertial coeficient, how much the prev velocity influences at the new one
 const c1 = 0.9 //c1 is how much personal experiences matters
 const c2 = 1 //c2 is how much global experiences matters
-const error = 0.005 //Minimum solution's error
-const maxInteraction = 1e6 //Number of interactions that the algorithm will work
+const error = 0.01 //Minimum solution's error
+const maxInteraction = 3e3 //Number of interactions that the algorithm will work
+let map = null
 
-const fitness = ({ x, y }) => {
-  let sum = 0
-  people.forEach(
-    person =>
-      (sum +=
+const genLocation = () => ({
+  lat: Math.random() * 0.01 - 5.846,
+  lng: Math.random() * 0.01 - 35.207,
+})
+
+// Person Vector
+const nPeople = 4
+const people = new Array(nPeople)
+  .fill(0)
+  .map(() => new Person(genLocation(), Math.random() * 10))
+
+const calcularDistancia = (lat, lng, person) =>
+  fetch(
+    `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${lat},${lng}&destinations=${
+      person.lat
+    },${person.lng}&key=AIzaSyBcMFCfbdJdD3__pdiZWMU9Ab5PS2N-pYo`,
+  ).text()
+
+const fitness = async ({ lat, lng }) =>
+  (await Promise.all(
+    people.map(async person => {
+      // console.log(await calcularDistancia(lat, lng, person.position))
+      return (
         Math.sqrt(
-          Math.pow(person.position.x - x, 2) +
-            Math.pow(person.position.y - y, 2),
-        ) / person.consumption),
-  )
-  return sum
-}
+          Math.pow(person.position.lat - lat, 2) +
+            Math.pow(person.position.lng - lng, 2),
+        ) * person.consumption
+      )
+    }),
+  )).reduce((a, b) => a + b)
 
-const updateVelocity = (position, velocity, pbest) => ({
-  x:
-    w * velocity.x +
-    Math.random() * c1 * (pbest.x - position.x) +
-    Math.random() * c2 * (gbest.x - position.x),
-  y:
-    w * velocity.y +
-    Math.random() * c1 * (pbest.y - position.y) +
-    Math.random() * c2 * (gbest.y - position.y),
+const updateVelocity = (position, velocity, pbest, gbest) => ({
+  lat:
+    w * velocity.lat +
+    Math.random() * c1 * (pbest.lat - position.lat) +
+    Math.random() * c2 * (gbest.lat - position.lat),
+  lng:
+    w * velocity.lng +
+    Math.random() * c1 * (pbest.lng - position.lng) +
+    Math.random() * c2 * (gbest.lng - position.lng),
 })
 
 //get the position which has the best position from all particles in that interaction
-const getmin = vector => {
+const getmin = async particles => {
   let minFitness = 1e6
-  let pos
-  vector.forEach(particle => {
-    const pbestFitness = fitness(particle.pbest)
+  let pos = null
+  const pbests = await Promise.all(
+    particles.map(particle => fitness(particle.pbest)),
+  )
+  pbests.forEach((pbestFitness, i) => {
     if (minFitness > pbestFitness) {
       minFitness = pbestFitness
-      pos = particle.pbest
+      pos = particles[i].pbest
     }
   })
   return pos
 }
 
 //Algorithm
-for (interaction = 0; interaction < maxInteraction; interaction++) {
-  pVector.forEach(particle => {
-    const pFitness = fitness(particle.position)
-    const pbest =
-      pFitness <= fitness(particle.pbest) ? particle.position : particle.pbest
-    return Object.assign(particle, { pbest, fitness: pFitness })
-  })
+async function run() {
+  loadingButton(true)
 
-  const bestPbest = getmin(pVector)
+  const nParticle = 4
+  const pVector = new Array(nParticle)
+    .fill(0)
+    .map(() => new Particle(genLocation(), genLocation()))
 
-  if (Math.abs(fitness(bestPbest) - fitness(gbest)) < error) break
+  let gbest = { lat: 1e6, lng: 1e6 } // Best position global, big value to begin
+  let fitGBest = 1e6
+  let interaction = 0
 
-  if (fitness(bestPbest) < fitness(gbest)) {
-    gbest = bestPbest
-    // allPositions.push(bestPbest)
-  }
-
-  //update new velocities and positions
-  pVector.forEach(particle => {
-    const velocity = updateVelocity(
-      particle.position,
-      particle.velocity,
-      particle.pbest,
-    )
-    const position = {
-      x: particle.position.x + velocity.x,
-      y: particle.position.y + velocity.y,
-    }
-    return Object.assign(particle, { velocity, position })
-  })
-}
-
-console.log(`
-  Melhor solução é [${gbest.x},${gbest.y}]
-  encontrada com ${interaction} interações - ${Math.abs(fitness(gbest))}.
-`)
-
-function initMap() {
-  /*
-  var directionsService = new google.maps.DirectionsService()
-  var directionsRenderer = []
-  function renderDirections(result, color) {
-      directionsRenderer.push(new google.maps.DirectionsRenderer({
-          map: map,
-          directions: result,
-          polylineOptions: {
-              strokeColor: color
-          }, suppressMarkers: true, preserveViewport: true
-      }))
-  }
-  function requestDirections(color, start, end) {
-      directionsService.route({
-          origin: start,
-          destination: end,
-          travelMode: google.maps.DirectionsTravelMode.DRIVING
-      }, function (result, status) {
-          renderDirections(result, color);
-      });
-  }
-  requestDirections(escolasColors[result[i].escolaIndex], new google.maps.LatLng(result[i].pessoa.lat, result[i].pessoa.lng), new google.maps.LatLng(result[i].escola.lat, result[i].escola.lng))
-  */
-  const map = new google.maps.Map(document.getElementById('map'), {
-    zoom: 15,
-    center: { lat: -5.839597, lng: -35.209195 },
-  })
-  people.forEach(
-    person =>
-      new google.maps.Marker({
-        position: { lat: person.position.x, lng: person.position.y },
-        title: `Gasto: ${person.consumption}`,
-        map,
+  for (interaction; interaction < maxInteraction; interaction += 1) {
+    await Promise.all(
+      pVector.map(async particle => {
+        const pFitness = await fitness(particle.position)
+        const pbest =
+          pFitness <= (await fitness(particle.pbest))
+            ? particle.position
+            : particle.pbest
+        return Object.assign(particle, { pbest, fitness: pFitness })
       }),
-  )
+    )
+
+    const bestPbest = await getmin(pVector)
+    fitGBest = await fitness(gbest)
+
+    if (Math.abs(fitGBest) < error) break
+
+    if ((await fitness(bestPbest)) < fitGBest) {
+      gbest = bestPbest
+    }
+
+    //update new velocities and positions
+    pVector.forEach(particle => {
+      const velocity = updateVelocity(
+        particle.position,
+        particle.velocity,
+        particle.pbest,
+        gbest,
+      )
+      const position = {
+        lat: particle.position.lat + velocity.lat,
+        lng: particle.position.lng + velocity.lng,
+      }
+      return Object.assign(particle, { velocity, position })
+    })
+  }
+
+  console.log(`
+    gBest é [${gbest.lat},${gbest.lng}]
+    com ${interaction} interações e
+    erro ${Math.abs(fitGBest)}.
+  `)
+
+  // generate markers
   const gbestMarker = new google.maps.Marker({
     map,
-    position: { lat: gbest.x, lng: gbest.y },
+    position: { lat: gbest.lat, lng: gbest.lng },
     icon: {
       path: google.maps.SymbolPath.CIRCLE,
       scale: 10,
     },
   })
+
+  loadingButton(false)
 }
 
-/*
-google.charts.load('current', { packages: ['corechart'] })
-google.charts.setOnLoadCallback(drawChart)
+function initMap() {
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: { lat: -5.839597, lng: -35.209195 },
+    zoom: 15,
+  })
 
-function drawChart() {
-  var data = google.visualization.arrayToDataTable([['X', 'Y'], ...res])
-
-  var options = {
-    title: '',
-    hAxis: { title: 'X', minValue: 0, maxValue: 15 },
-    vAxis: { title: 'Y', minValue: 0, maxValue: 15 },
-    legend: 'none',
-  }
-
-  var chart = new google.visualization.ScatterChart(
-    document.getElementById('chart_div'),
+  // generate markers
+  people.forEach(
+    person =>
+      new google.maps.Marker({
+        position: { lat: person.position.lat, lng: person.position.lng },
+        title: `Gasto: ${person.consumption}`,
+        label: person.consumption.toFixed(0),
+        map,
+      }),
   )
-
-  chart.draw(data, options)
+  run()
 }
-*/
 
-// console.log('allPositions', allPositions)
+function loadingButton(loading) {
+  const svg = document.getElementById('svg-reload')
+  if (!loading) svg.classList.remove('rotating')
+  document.getElementById('reload').disabled = loading
+  console.log(loading, svg.classList)
+}
+
+document.getElementById('reload').addEventListener('click', run)
+window.onload = initMap
