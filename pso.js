@@ -24,16 +24,16 @@ const w = 0.6 //Inertial coeficient, how much the prev velocity influences at th
 const c1 = 0.9 //c1 is how much personal experiences matters
 const c2 = 1 //c2 is how much global experiences matters
 const error = 0.06 //Minimum solution's error
-const maxInteraction = 3e3 //Number of interactions that the algorithm will work
+const maxInteraction = 5e3 //Number of interactions that the algorithm will work
 let map = null
 
 const getLocation = () => ({
-  lat: Math.random() * 0.01 - 5.846,
-  lng: Math.random() * 0.01 - 35.207,
+  lat: Math.random() * 0.01 - 5.856,
+  lng: Math.random() * 0.01 - 35.211,
 })
 
 // Person Vector
-const nPeople = 4
+const nPeople = 10
 const people = new Array(nPeople)
   .fill(0)
   .map(() => new Person(getLocation(), Math.random() * 10))
@@ -89,7 +89,7 @@ const getmin = async particles => {
 
 //Algorithm
 async function run() {
-  const nParticle = 4
+  const nParticle = 8
   const pVector = new Array(nParticle)
     .fill(0)
     .map(() => new Particle(getLocation(), getLocation()))
@@ -152,11 +152,11 @@ async function run() {
       i = ${interaction}, error = ${Math.abs(fitGBest).toFixed(8)}.
     `)
   }
-  console.log(`
-    gBest é [${gbest.lat},${gbest.lng}]
-    com ${interaction} interações e
-    erro ${Math.abs(fitGBest)}.
-  `)
+  // console.log(`
+  //   gBest é [${gbest.lat},${gbest.lng}]
+  //   com ${interaction} interações e
+  //   erro ${Math.abs(fitGBest)}.
+  // `)
 
   // generate markers
   const gbestMarker = new google.maps.Marker({
@@ -174,8 +174,8 @@ async function run() {
 
 function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
-    center: { lat: -5.840076, lng: -35.203144 },
-    zoom: 15,
+    center: { lat: -5.849312, lng: -35.204799 },
+    zoom: 16,
   })
 
   // generate markers
