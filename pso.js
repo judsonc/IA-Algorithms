@@ -146,6 +146,12 @@ async function run() {
     })
   }
 
+  if (typeof window.orientation !== 'undefined') {
+    alert(`
+      [${gbest.lat},${gbest.lng}],
+      i = ${interaction}, error = ${Math.abs(fitGBest).toFixed(8)}.
+    `)
+  }
   console.log(`
     gBest é [${gbest.lat},${gbest.lng}]
     com ${interaction} interações e
