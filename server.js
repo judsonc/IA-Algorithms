@@ -7,7 +7,7 @@ const app = express()
 const server = require('http').Server(app)
 const io = require('socket.io')(server)
 
-const w = 0.6 //Inertial coeficient, how much the prev velocity influences at the new one
+const w = 0.4 //Inertial coeficient, how much the prev velocity influences at the new one
 const c1 = 0.9 //c1 is how much personal experiences matters
 const c2 = 1 //c2 is how much global experiences matters
 const maxInteraction = 4e3 //Number of interactions that the algorithm will work
