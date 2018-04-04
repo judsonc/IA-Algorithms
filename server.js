@@ -10,8 +10,7 @@ const io = require('socket.io')(server)
 const w = 0.6 //Inertial coeficient, how much the prev velocity influences at the new one
 const c1 = 0.9 //c1 is how much personal experiences matters
 const c2 = 1 //c2 is how much global experiences matters
-const maxInteraction = 5e3 //Number of interactions that the algorithm will work
-let error = 1e6 //Minimum solution's error
+const maxInteraction = 4e3 //Number of interactions that the algorithm will work
 
 server.listen(process.env.PORT || 3000, () => console.log('server up'))
 
@@ -38,40 +37,36 @@ const getLocation = () => ({
   lng: Math.random() * 0.01 - 35.211,
 })
 
+/*
 const calcularDistancia = async (lat, lng, person) => {
   let url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${lat},${lng}&destinations=${
     person.lat
   },${person.lng}&key=AIzaSyBcMFCfbdJdD3__pdiZWMU9Ab5PS2N-pYo`
-  try {
-    const response = await axios(url, {
-      method: 'GET',
-      mode: 'no-cors',
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
-      withCredentials: true,
-      credentials: 'same-origin',
-    })
-    console.log('\n\nmap', response)
-  } catch (e) {
-    console.log('\n\n\nmap - err', e)
-  }
-  // let response = await fetch(url)
-  // let data = await response.json()
-  // return data
+  const response = await axios(url, {
+    method: 'GET',
+    mode: 'no-cors',
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
+    withCredentials: true,
+    credentials: 'same-origin',
+  })
+  console.log('\n\nmap', response)
+  let response = await fetch(url)
+  let data = await response.json()
+  return data
 }
+*/
 
 const fitness = async ({ lat, lng }, people) =>
   (await Promise.all(
-    people.map(async person => {
-      // await calcularDistancia(lat, lng, person.position)
-      return (
+    people.map(
+      async person =>
         Math.sqrt(
           Math.pow(person.position.lat - lat, 2) +
             Math.pow(person.position.lng - lng, 2),
-        ) * person.consumption
-      )
-    }),
+        ) * person.consumption,
+    ),
   )).reduce((a, b) => a + b)
 
 const updateVelocity = (position, velocity, pbest, gbest) => ({
@@ -113,9 +108,8 @@ io.on('connection', socket => {
     let bestPbest = { lat: 1e6, lng: 1e6 }
     let gbest = { lat: 1e6, lng: 1e6 } // Best position global, big value to begin
     let fitGBest = 1e6
-    let interaction = 0
 
-    for (interaction; interaction < maxInteraction; interaction += 1) {
+    for (let interaction = 0; interaction < maxInteraction; interaction += 1) {
       await Promise.all(
         pVector.map(async particle => {
           const pFitness = await fitness(particle.position, people)
@@ -128,17 +122,6 @@ io.on('connection', socket => {
       )
 
       bestPbest = await getmin(pVector, people)
-      error = bestPbest.bestPbestFitness - fitGBest
-      // console.log(
-      //   'dif',
-      //   interaction,
-      //   error,
-      //   bestPbest.bestPbestFitness,
-      //   fitGBest,
-      // )
-
-      // if (!Math.abs(error)) break
-
       if (bestPbest.bestPbestFitness < fitGBest) {
         gbest = bestPbest.position
         fitGBest = bestPbest.bestPbestFitness
@@ -160,6 +143,6 @@ io.on('connection', socket => {
         return Object.assign(particle, { velocity, position })
       })
     }
-    socket.emit('bestParticle', { gbest, interaction, error })
+    socket.emit('bestParticle', gbest)
   })
 })

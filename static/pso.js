@@ -27,7 +27,7 @@ const people = new Array(nPeople)
 socket.on('newParticle', data => {
   new google.maps.Marker({
     map,
-    position: { lat: data.lat, lng: data.lng },
+    position: data,
     icon: {
       path: google.maps.SymbolPath.CIRCLE,
       fillOpacity: 0.9,
@@ -36,13 +36,13 @@ socket.on('newParticle', data => {
   })
 })
 
-socket.on('bestParticle', data => {
+socket.on('bestParticle', gbest => {
   document.getElementById('reload').disabled = false
   document.getElementById('svg-reload').classList.remove('rotating')
-  // generate markers
+
   const gbestMarker = new google.maps.Marker({
     map,
-    position: { lat: data.gbest.lat, lng: data.gbest.lng },
+    position: gbest,
     icon: {
       path: google.maps.SymbolPath.CIRCLE,
       fillOpacity: 0.8,
@@ -51,17 +51,7 @@ socket.on('bestParticle', data => {
       strokeWeight: 40,
     },
   })
-  if (typeof window.orientation !== 'undefined') {
-    alert(`
-        [${gbest.lat},${gbest.lng}],
-        i = ${interaction}, error = ${Math.abs(fitGBest).toFixed(8)}.
-      `)
-  }
-  console.log(`
-      gBest é [${data.gbest.lat},${data.gbest.lng}]
-      com ${data.interaction} interações e
-      erro ${Math.abs(data.error)}.
-    `)
+  console.log(`gBest = [${gbest.lat},${gbest.lng}]`)
 })
 
 //Algorithm
